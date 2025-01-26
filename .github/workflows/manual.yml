@@ -26,12 +26,12 @@ jobs:
 
             # Secure MySQL installation
             sudo mysql_secure_installation <<MYSQL_INPUT
-n
-y
-y
-y
-y
-MYSQL_INPUT
+            n
+            y
+            y
+            y
+            y
+            MYSQL_INPUT
 
             # Create WordPress database and user
             sudo mysql -e "CREATE DATABASE wordpress_db;"
