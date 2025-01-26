@@ -1,7 +1,9 @@
 name: Deploy WordPress with LEMP and SSL
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   deploy:
@@ -17,20 +19,18 @@ jobs:
         run: |
           sudo apt update
           sudo apt install sshpass -y
-          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{
-            secrets.SERVER_USER
-          }}@${{ secrets.SERVER_IP }} bash -s <<'EOF'
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} bash -s <<'EOF'
             # Update packages and install LEMP stack
             sudo apt update && sudo apt upgrade -y
             sudo apt install nginx mysql-server php-fpm php-mysql -y
 
             # Secure MySQL installation
             sudo mysql_secure_installation <<MYSQL_INPUT
-            n
-            y
-            y
-            y
-            y
+n
+y
+y
+y
+y
 MYSQL_INPUT
 
             # Create WordPress database and user
@@ -54,34 +54,34 @@ MYSQL_INPUT
 
             # Enable caching and gzip in Nginx
             sudo tee /etc/nginx/conf.d/wordpress.conf > /dev/null <<NGINX
-            server {
-                listen 80;
-                server_name _;
-                root /var/www/html/wordpress;
+server {
+    listen 80;
+    server_name _;
+    root /var/www/html/wordpress;
 
-                index index.php index.html index.htm;
+    index index.php index.html index.htm;
 
-                location / {
-                    try_files \$uri \$uri/ /index.php?q=\$uri&\$args;
-                }
+    location / {
+        try_files \$uri \$uri/ /index.php?q=\$uri&\$args;
+    }
 
-                location ~ \.php\$ {
-                    include snippets/fastcgi-php.conf;
-                    fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
-                    fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-                    include fastcgi_params;
-                }
+    location ~ \.php\$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+        include fastcgi_params;
+    }
 
-                # Enable gzip
-                gzip on;
-                gzip_types text/plain text/css application/json application/javascript text/xml application/xml+rss text/javascript;
+    # Enable gzip
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml+rss text/javascript;
 
-                # Enable caching
-                location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
-                    expires 6M;
-                    access_log off;
-                }
-            }
+    # Enable caching
+    location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
+        expires 6M;
+        access_log off;
+    }
+}
 NGINX
             sudo nginx -t
             sudo systemctl restart nginx
@@ -97,5 +97,4 @@ EOF
 
       # Step 3: Verify the deployment
       - name: Verify Deployment
-        run: |
-          curl -I http://${{ secrets.SERVER_IP }}
+        run: curl -I http://${{ secrets.SERVER_IP }}
