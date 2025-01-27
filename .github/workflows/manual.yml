@@ -87,12 +87,12 @@ jobs:
             # Install Certbot for SSL
             sudo apt install certbot python3-certbot-nginx -y
             sudo certbot --nginx -n --agree-tos --email admin@example.com --redirect -d yourdomain.com
-EOF env:
+          EOF env:
           SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
           SERVER_IP: ${{ secrets.SERVER_IP }}
 
           # Step 3: Verify the deployment 
-          -name: Verify Deployment
+          - name: Verify Deployment
             run: curl -I http://${{ secrets.SERVER_IP }} 
 
