@@ -1,7 +1,10 @@
 name: Deploy WordPress with LEMP and SSL
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+      
 env:
   PARAMETER_NAME: "test-key"
   INSTANCE_ID: "i-07aef1121d6082521" 
@@ -55,87 +58,113 @@ jobs:
           echo "$PEM_CONTENT" > private_key
           chmod 400 private_key
           echo "PEM_FILE_PATH=private_key" >> $GITHUB_ENV
-      # Step 2: Set up the server using LEMP stack
-      - name: Install LEMP and WordPress on Server
+
+      - name: SSH and install tools
+        env:
+          PEM_FILE_PATH: ${{ env.PEM_FILE_PATH }}
+          SSH_USER: ubuntu
+          SSH_HOST: ${{ env.EC2_PUBLIC_IP }}
         run: |
-          sudo apt update
-          sudo apt install sshpass -y
-          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} bash -s <<'EOF'
-            # Update packages and install LEMP stack
-            sudo apt update && sudo apt upgrade -y
-            sudo apt install nginx mysql-server php-fpm php-mysql -y
+          ssh -o StrictHostKeyChecking=no -i $PEM_FILE_PATH $SSH_USER@$SSH_HOST << 'EOF'
+            # AWS CLI
+            sudo apt update -y \
+            && sudo apt upgrade -y \
+            && sudo apt install -y unzip \
+            && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+            && unzip awscliv2.zip \
+            && sudo ./aws/install --update \
+            && aws --version \
+            ' root
+          EOF
 
-            # Secure MySQL installation
-            sudo mysql_secure_installation <<MYSQL_INPUT
-            n
-            y
-            y
-            y
-            y
-            MYSQL_INPUT
+      - name: Remove SSH access from runner IP
+        run: |
+          SECURITY_GROUP_ID=${{ env.SECURITY_GROUP_ID }}
+          PUBLIC_IP=${{ env.PUBLIC_IP }}
+          aws ec2 revoke-security-group-ingress --group-id $SECURITY_GROUP_ID --protocol tcp --port 22 --cidr $PUBLIC_IP/32
 
-            # Create WordPress database and user
-            sudo mysql -e "CREATE DATABASE wordpress_db;"
-            sudo mysql -e "CREATE USER 'wordpress_user'@'localhost' IDENTIFIED BY 'strong_password';"
-            sudo mysql -e "GRANT ALL PRIVILEGES ON wordpress_db.* TO 'wordpress_user'@'localhost';"
-            sudo mysql -e "FLUSH PRIVILEGES;"
 
-            # Download and set up WordPress
-            wget https://wordpress.org/latest.tar.gz
-            tar -xvzf latest.tar.gz
-            sudo mv wordpress /var/www/html/
-            sudo chown -R www-data:www-data /var/www/html/wordpress
-            sudo chmod -R 755 /var/www/html/wordpress
+    
+      # # Step 2: Set up the server using LEMP stack
+      # - name: Install LEMP and WordPress on Server
+      #   run: |
+      #     sudo apt update
+      #     sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} bash -s <<'EOF'
+      #       # Update packages and install LEMP stack
+      #       sudo apt update && sudo apt upgrade -y
+      #       sudo apt install nginx mysql-server php-fpm php-mysql -y
 
-            # Configure WordPress
-            sudo cp /var/www/html/wordpress/wp-config-sample.php /var/www/html/wordpress/wp-config.php
-            sudo sed -i "s/database_name_here/wordpress_db/" /var/www/html/wordpress/wp-config.php
-            sudo sed -i "s/username_here/wordpress_user/" /var/www/html/wordpress/wp-config.php
-            sudo sed -i "s/password_here/strong_password/" /var/www/html/wordpress/wp-config.php
+      #       # Secure MySQL installation
+      #       sudo mysql_secure_installation <<MYSQL_INPUT
+      #       n
+      #       y
+      #       y
+      #       y
+      #       y
+      #       MYSQL_INPUT
 
-            # Enable caching and gzip in Nginx
-            sudo tee /etc/nginx/conf.d/wordpress.conf > /dev/null <<NGINX
-            server {
-                      listen 80;
-                      server_name _;
-                      root /var/www/html/wordpress;
+      #       # Create WordPress database and user
+      #       sudo mysql -e "CREATE DATABASE wordpress_db;"
+      #       sudo mysql -e "CREATE USER 'wordpress_user'@'localhost' IDENTIFIED BY 'strong_password';"
+      #       sudo mysql -e "GRANT ALL PRIVILEGES ON wordpress_db.* TO 'wordpress_user'@'localhost';"
+      #       sudo mysql -e "FLUSH PRIVILEGES;"
 
-                      index index.php index.html index.htm;
+      #       # Download and set up WordPress
+      #       wget https://wordpress.org/latest.tar.gz
+      #       tar -xvzf latest.tar.gz
+      #       sudo mv wordpress /var/www/html/
+      #       sudo chown -R www-data:www-data /var/www/html/wordpress
+      #       sudo chmod -R 755 /var/www/html/wordpress
 
-                     location / {
-                     try_files \$uri \$uri/ /index.php?q=\$uri&\$args;
-                     }
+      #       # Configure WordPress
+      #       sudo cp /var/www/html/wordpress/wp-config-sample.php /var/www/html/wordpress/wp-config.php
+      #       sudo sed -i "s/database_name_here/wordpress_db/" /var/www/html/wordpress/wp-config.php
+      #       sudo sed -i "s/username_here/wordpress_user/" /var/www/html/wordpress/wp-config.php
+      #       sudo sed -i "s/password_here/strong_password/" /var/www/html/wordpress/wp-config.php
 
-                    location ~ \.php\$ {
-                    include snippets/fastcgi-php.conf;
-                    fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
-                    fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-                    include fastcgi_params;
-                    }
+      #       # Enable caching and gzip in Nginx
+      #       sudo tee /etc/nginx/conf.d/wordpress.conf > /dev/null <<NGINX
+      #       server {
+      #                 listen 80;
+      #                 server_name _;
+      #                 root /var/www/html/wordpress;
 
-          # Enable gzip
-             gzip on;
-             gzip_types text/plain text/css application/json application/javascript text/xml application/xml+rss text/javascript;
+      #                 index index.php index.html index.htm;
 
-          # Enable caching
-            location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
-            expires 6M;
-            access_log off;
-            }
-            }
-            NGINX
-            sudo nginx -t
-            sudo systemctl restart nginx
+      #                location / {
+      #                try_files \$uri \$uri/ /index.php?q=\$uri&\$args;
+      #                }
 
-            # Install Certbot for SSL
-            sudo apt install certbot python3-certbot-nginx -y
-            sudo certbot --nginx -n --agree-tos --email admin@example.com --redirect -d yourdomain.com
-          EOF env:
-          SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
-          SERVER_IP: ${{ secrets.SERVER_IP }}
+      #               location ~ \.php\$ {
+      #               include snippets/fastcgi-php.conf;
+      #               fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+      #               fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+      #               include fastcgi_params;
+      #               }
 
-          # Step 3: Verify the deployment 
-          - name: Verify Deployment
-            run: curl -I http://${{ secrets.SERVER_IP }} 
+      #     # Enable gzip
+      #        gzip on;
+      #        gzip_types text/plain text/css application/json application/javascript text/xml application/xml+rss text/javascript;
+
+      #     # Enable caching
+      #       location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
+      #       expires 6M;
+      #       access_log off;
+      #       }
+      #       }
+      #       NGINX
+      #       sudo nginx -t
+      #       sudo systemctl restart nginx
+
+      #       # Install Certbot for SSL
+      #       sudo apt install certbot python3-certbot-nginx -y
+      #       sudo certbot --nginx -n --agree-tos --email admin@example.com --redirect -d yourdomain.com
+      #     EOF env:
+      #     SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
+      #     SERVER_USER: ${{ secrets.SERVER_USER }}
+      #     SERVER_IP: ${{ secrets.SERVER_IP }}
+
+      #     # Step 3: Verify the deployment 
+      #     - name: Verify Deployment
+      #       run: curl -I http://${{ secrets.SERVER_IP }} 
 
