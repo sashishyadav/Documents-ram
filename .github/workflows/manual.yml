@@ -92,6 +92,7 @@ EOF env:
           SERVER_USER: ${{ secrets.SERVER_USER }}
           SERVER_IP: ${{ secrets.SERVER_IP }}
 
-      # Step 3: Verify the deployment
-      - name: Verify Deployment
-        run: curl -I http://${{ secrets.SERVER_IP }}
+          # Step 3: Verify the deployment 
+          -name: Verify Deployment
+            run: curl -I http://${{ secrets.SERVER_IP }} 
+
