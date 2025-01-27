@@ -69,7 +69,15 @@ jobs:
             # AWS CLI
             sudo apt update -y \
             && sudo apt upgrade -y \
-            && sudo apt install nginx mysql-server php-fpm php-mysql -y
+            && sudo apt install nginx mysql-server php-fpm php-mysql -y \
+            && sudo mysql_secure_installation <<EOF
+            y
+            2
+            y
+            y
+            y
+            y
+            EOF
             
           EOF
 
