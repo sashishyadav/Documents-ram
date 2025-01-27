@@ -2,6 +2,10 @@ name: Deploy WordPress with LEMP and SSL
 
 on:
   workflow_dispatch:
+env:
+  PARAMETER_NAME: "test-key"
+  INSTANCE_ID: "i-07aef1121d6082521" 
+  AWS_REGION: "eu-north-1"
   
 jobs:
   deploy:
@@ -11,7 +15,46 @@ jobs:
       # Step 1: Checkout the code
       - name: Checkout Code
         uses: actions/checkout@v3
+        
+      - name: Get and log public IP address
+        run: |
+          echo "Fetching the public IP address of the runner..."
+          PUBLIC_IP=$(curl -s ifconfig.me)
+          echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-north-1
+
+      - name: Retrieve first security group ID
+        id: get-sg
+        run: |
+          INSTANCE_ID=${{ env.INSTANCE_ID }}
+          SECURITY_GROUP_ID=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query "Reservations[0].Instances[0].SecurityGroups[0].GroupId" --output text)
+          echo "SECURITY_GROUP_ID=$SECURITY_GROUP_ID" >> $GITHUB_ENV
+          EC2_PUBLIC_IP=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query "Reservations[0].Instances[0].PublicIpAddress" --output text)
+          echo "EC2_PUBLIC_IP=$EC2_PUBLIC_IP" >> $GITHUB_ENV
+
+      - name: Update security group to allow SSH from runner IP
+        run: |
+          SECURITY_GROUP_ID=${{ env.SECURITY_GROUP_ID }}
+          PUBLIC_IP=${{ env.PUBLIC_IP }}
+          aws ec2 authorize-security-group-ingress --group-id $SECURITY_GROUP_ID --protocol tcp --port 22 --cidr $PUBLIC_IP/32
+          
+          VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=${{ env.VPC_NAME }}" --query "Vpcs[*].VpcId" --output text)
+          echo "VPC_ID=$VPC_ID" >> $GITHUB_ENV
+          
+      - name: Retrieve .pem file from SSM Parameter Store
+        id: get-pem
+        run: |
+          PARAMETER_NAME=${{ env.PARAMETER_NAME }}
+          PEM_CONTENT=$(aws ssm get-parameter --name $PARAMETER_NAME --with-decryption --query "Parameter.Value" --output text)
+          echo "$PEM_CONTENT" > private_key
+          chmod 400 private_key
+          echo "PEM_FILE_PATH=private_key" >> $GITHUB_ENV
       # Step 2: Set up the server using LEMP stack
       - name: Install LEMP and WordPress on Server
         run: |
