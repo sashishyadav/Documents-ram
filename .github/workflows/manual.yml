@@ -77,6 +77,54 @@ jobs:
             FLUSH PRIVILEGES;
             exit
             EOF
+            
+      - name: Download and set up WordPress
+        run: |
+          sudo wget https://wordpress.org/latest.tar.gz \
+          && tar -xvzf latest.tar.gz \
+          && sudo mv wordpress /var/www/html/ \
+          && sudo chown -R www-data:www-data /var/www/html/wordpress \
+          && sudo chmod -R 755 /var/www/html/wordpress
+
+      - name: Configure WordPress
+        run: |
+          sudo cp /var/www/html/wordpress/wp-config-sample.php /var/www/html/wordpress/wp-config.php \
+          && sudo sed -i "s/database_name_here/wordpress_db/" /var/www/html/wordpress/wp-config.php \
+          && sudo sed -i "s/username_here/wordpress_user/" /var/www/html/wordpress/wp-config.php \
+          && sudo sed -i "s/password_here/${{ secrets.MYSQL_ROOT_PASSWORD }}'/" /var/www/html/wordpress/wp-config.php \
+          && # Enable caching and gzip in Nginx
+             sudo tee /etc/nginx/conf.d/wordpress.conf > /dev/null <<NGINX
+             server {
+                       listen 80;
+                       server_name _;
+                       root /var/www/html/wordpress;
+
+                       index index.php index.html index.htm;
+
+                      location / {
+                      try_files \$uri \$uri/ /index.php?q=\$uri&\$args;
+                      }
+
+                     location ~ \.php\$ {
+                     include snippets/fastcgi-php.conf;
+                     fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+                     fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+                     include fastcgi_params;
+                    }
+
+           # Enable gzip
+              gzip on;
+              gzip_types text/plain text/css application/json application/javascript text/xml application/xml+rss text/javascript;
+
+           # Enable caching
+             location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
+             expires 6M;
+             access_log off;
+             }
+             }
+             NGINX
+          
+          
           EOF
 
       - name: Remove SSH access from runner IP
@@ -125,35 +173,36 @@ jobs:
       #       sudo sed -i "s/password_here/strong_password/" /var/www/html/wordpress/wp-config.php
 
       #       # Enable caching and gzip in Nginx
-      #       sudo tee /etc/nginx/conf.d/wordpress.conf > /dev/null <<NGINX
-      #       server {
-      #                 listen 80;
-      #                 server_name _;
-      #                 root /var/www/html/wordpress;
+           #   sudo tee /etc/nginx/conf.d/wordpress.conf > /dev/null <<NGINX
+           #   server {
+           #             listen 80;
+           #             server_name _;
+           #             root /var/www/html/wordpress;
 
-      #                 index index.php index.html index.htm;
+           #             index index.php index.html index.htm;
 
-      #                location / {
-      #                try_files \$uri \$uri/ /index.php?q=\$uri&\$args;
-      #                }
+           #            location / {
+           #            try_files \$uri \$uri/ /index.php?q=\$uri&\$args;
+           #            }
 
-      #               location ~ \.php\$ {
-      #               include snippets/fastcgi-php.conf;
-      #               fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
-      #               fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-      #               include fastcgi_params;
-      #               }
+           #           location ~ \.php\$ {
+           #           include snippets/fastcgi-php.conf;
+           #           fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+           #           fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+           #           include fastcgi_params;
+           #          }
 
-      #     # Enable gzip
-      #        gzip on;
-      #        gzip_types text/plain text/css application/json application/javascript text/xml application/xml+rss text/javascript;
+           # # Enable gzip
+           #    gzip on;
+           #    gzip_types text/plain text/css application/json application/javascript text/xml application/xml+rss text/javascript;
 
-      #     # Enable caching
-      #       location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
-      #       expires 6M;
-      #       access_log off;
-      #       }
-      #       }
+           # # Enable caching
+           #   location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
+           #   expires 6M;
+           #   access_log off;
+           #   }
+           #   }
+          
       #       NGINX
       #       sudo nginx -t
       #       sudo systemctl restart nginx
