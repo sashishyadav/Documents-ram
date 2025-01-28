@@ -75,7 +75,9 @@ jobs:
             CREATE USER 'wordpress_user'@'localhost' IDENTIFIED BY '${{ secrets.MYSQL_ROOT_PASSWORD }}';
             GRANT ALL PRIVILEGES ON wordpress_db.* TO 'wordpress_user'@'localhost';
             FLUSH PRIVILEGES;
+            exit
             EOF
+            &&
 
           EOF
 
