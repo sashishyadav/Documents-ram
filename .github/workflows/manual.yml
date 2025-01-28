@@ -70,7 +70,7 @@ jobs:
             sudo apt update -y \
             && sudo apt upgrade -y \
             && sudo apt install -y nginx mysql-server php-fpm php-mysql expect
-            cat << 'EOL' > mysql_secure_installation.exp
+            cat << EOL > mysql_secure_installation.exp
                   #!/usr/bin/expect
                   spawn sudo mysql_secure_installation
                   expect "Press y|Y for Yes, any other key for No:" { send "y\r" }
