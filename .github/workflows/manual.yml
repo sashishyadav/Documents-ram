@@ -77,8 +77,6 @@ jobs:
             FLUSH PRIVILEGES;
             exit
             EOF
-            &&
-
           EOF
 
       - name: Remove SSH access from runner IP
