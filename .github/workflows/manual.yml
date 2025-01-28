@@ -69,16 +69,21 @@ jobs:
             # AWS CLI
             sudo apt update -y \
             && sudo apt upgrade -y \
-            && sudo apt install nginx mysql-server php-fpm php-mysql -y \
-            && sudo mysql_secure_installation <<EOF
-            y
-            2
-            y
-            y
-            y
-            y
-            EOF
-            
+            && sudo apt install -y nginx mysql-server php-fpm php-mysql expect
+
+            # Use expect script to automate mysql_secure_installation
+            expect << 'END_EXPECT'
+              spawn sudo mysql_secure_installation
+              expect "Press y|Y for Yes, any other key for No:" { send "y\r" }
+              expect "Please enter 0 = LOW, 1 = MEDIUM and 2 = STRONG:" { send "2\r" }
+              expect "Change the password for root? (Press y|Y for Yes, any other key for No) :" { send "y\r" }
+              expect "Remove anonymous users? (Press y|Y for Yes, any other key for No) :" { send "y\r" }
+              expect "Disallow root login remotely? (Press y|Y for Yes, any other key for No) :" { send "y\r" }
+              expect "Remove test database and access to it? (Press y|Y for Yes, any other key for No) :" { send "y\r" }
+              expect "Reload privilege tables now? (Press y|Y for Yes, any other key for No) :" { send "y\r" }
+              expect eof
+            END_EXPECT
+      
           EOF
 
       - name: Remove SSH access from runner IP
