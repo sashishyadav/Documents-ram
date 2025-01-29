@@ -70,17 +70,17 @@ jobs:
             sudo apt update -y \
             && sudo apt upgrade -y \
             && sudo apt install -y nginx mysql-server \
-            && sudo mysql -u root -p"${{ secrets.MYSQL_ROOT_PASSWORD }}" <<EOF
+            && sudo mysql -u root -p"${{ secrets.MYSQL_ROOT_PASSWORD }}" <<EOSQL
             CREATE DATABASE wordpress_db;
             CREATE USER 'wordpress_user'@'localhost' IDENTIFIED BY '${{ secrets.MYSQL_ROOT_PASSWORD }}';
             GRANT ALL PRIVILEGES ON wordpress_db.* TO 'wordpress_user'@'localhost';
             FLUSH PRIVILEGES;
             exit
-            EOF \
+            EOSQL \
             && sudo apt-get install -y software-properties-common \
             && sudo add-apt-repository -y ppa:ondrej/php \
             && sudo apt-get install -y php8.1 php8.1-gd php8.1-mysql php8.1-zip php8.1-fpm 
-            
+            EOF
       # - name: Install PHP 8.1
       #   run: |
       #     sudo apt-get update
