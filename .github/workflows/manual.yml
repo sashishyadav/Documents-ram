@@ -76,7 +76,10 @@ jobs:
             GRANT ALL PRIVILEGES ON wordpress_db.* TO 'wordpress_user'@'localhost';
             FLUSH PRIVILEGES;
             exit
-            EOF
+            EOF \
+            && sudo apt-get install -y software-properties-common \
+            && sudo add-apt-repository -y ppa:ondrej/php \
+            && sudo apt-get install -y php8.1 php8.1-gd php8.1-mysql php8.1-zip php8.1-fpm 
             
       - name: Install PHP 8.1
         run: |
