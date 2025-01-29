@@ -69,7 +69,7 @@ jobs:
             # AWS CLI
             sudo apt update -y \
             && sudo apt upgrade -y \
-            && sudo apt install -y nginx mysql-server php-fpm php-mysql \
+            && sudo apt install -y nginx mysql-server \
             && sudo mysql -u root -p"${{ secrets.MYSQL_ROOT_PASSWORD }}" <<EOF
             CREATE DATABASE wordpress_db;
             CREATE USER 'wordpress_user'@'localhost' IDENTIFIED BY '${{ secrets.MYSQL_ROOT_PASSWORD }}';
@@ -81,13 +81,13 @@ jobs:
             && sudo add-apt-repository -y ppa:ondrej/php \
             && sudo apt-get install -y php8.1 php8.1-gd php8.1-mysql php8.1-zip php8.1-fpm 
             
-      - name: Install PHP 8.1
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y software-properties-common
-          sudo add-apt-repository -y ppa:ondrej/php
-          sudo apt-get update
-          sudo apt-get install -y php8.1 php8.1-gd php8.1-mysql php8.1-zip php8.1-fpm 
+      # - name: Install PHP 8.1
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install -y software-properties-common
+      #     sudo add-apt-repository -y ppa:ondrej/php
+      #     sudo apt-get update
+      #     sudo apt-get install -y php8.1 php8.1-gd php8.1-mysql php8.1-zip php8.1-fpm 
           
       - name: Download and set up WordPress
         run: |
