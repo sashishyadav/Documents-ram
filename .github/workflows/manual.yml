@@ -109,7 +109,7 @@ jobs:
             sudo sed -i "s/username_here/wordpress_user/" /var/www/html/wordpress/wp-config.php
             sudo sed -i "s/password_here/${{ secrets.MYSQL_ROOT_PASSWORD }}/" /var/www/html/wordpress/wp-config.php
             sudo mv /etc/nginx/sites-enables/default /etc/nginx/sites-enabled/wordpress
-            sudo echo "
+            sudo tee /etc/nginx/sites-available/brainstormforce.servequake.com <<EOF
             server {
                 listen 80;
                 server_name brainstormforce.servequake.com;
@@ -138,11 +138,12 @@ jobs:
                     access_log off;
                 }
             }
-            " | sudo ln -s /etc/nginx/sites-enabled/brainstormforce.servequake.com /etc/nginx/sites-enabled/
+            EOF
+                
+                sudo ln -s /etc/nginx/sites-enabled/brainstormforce.servequake.com /etc/nginx/sites-enabled/
                 sudo tee /etc/nginx/sites-enabled/wordpress
                 sudo systemctl restart nginx
                 sudo systemctl reload nginx
-                # install certbot and obtain the certificate
                 sudo apt install certbot python3-certbot-nginx
                 sudo certbot --nginx -d brainstormforce.servequake.com
 
