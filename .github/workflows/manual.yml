@@ -75,17 +75,16 @@ jobs:
             sudo add-apt-repository -y ppa:ondrej/php
             sudo apt-get install -y php8.1 php8.1-gd php8.1-mysql php8.1-zip php8.1-fpm 
         
-            # Setup MySQL Database
-            sudo mysql -u root -p"${{ secrets.MYSQL_ROOT_PASSWORD }}" <<EOSQL
-            DROP DATABASE IF EXISTS wordpress_db;
-            DROP USER IF EXISTS 'wordpress_user'@'localhost';
-            CREATE DATABASE wordpress_db;
-            CREATE USER 'wordpress_user'@'localhost' IDENTIFIED BY '${{ secrets.MYSQL_ROOT_PASSWORD }}';
-            GRANT ALL PRIVILEGES ON wordpress_db.* TO 'wordpress_user'@'localhost';
-            FLUSH PRIVILEGES;
-            EOSQL
-
-
+      - name: Setup MySQL Database
+        run: |
+          sudo mysql -u root -p"${{ secrets.MYSQL_ROOT_PASSWORD }}" <<EOSQL
+          DROP DATABASE IF EXISTS wordpress_db;
+          DROP USER IF EXISTS 'wordpress_user'@'localhost';
+          CREATE DATABASE wordpress_db;
+          CREATE USER 'wordpress_user'@'localhost' IDENTIFIED BY '${{ secrets.MYSQL_ROOT_PASSWORD }}';
+          GRANT ALL PRIVILEGES ON wordpress_db.* TO 'wordpress_user'@'localhost';
+          FLUSH PRIVILEGES;
+          EOSQL
 
             # Restart Services
             sudo systemctl restart nginx
