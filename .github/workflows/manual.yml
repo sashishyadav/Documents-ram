@@ -79,14 +79,14 @@ jobs:
           SSH_HOST: ${{ env.EC2_PUBLIC_IP }}
         run: |
           ssh -o StrictHostKeyChecking=no -i $PEM_FILE_PATH $SSH_USER@$SSH_HOST << 'EOF'
-            sudo mysql -u root -p"${{ secrets.MYSQL_ROOT_PASSWORD }}" << 'EOSQL'
+            sudo mysql -u root -p"${{ secrets.MYSQL_ROOT_PASSWORD }}" -e "
               DROP DATABASE IF EXISTS wordpress_db;
               DROP USER IF EXISTS 'wordpress_user'@'localhost';
               CREATE DATABASE wordpress_db;
               CREATE USER 'wordpress_user'@'localhost' IDENTIFIED BY '${{ secrets.MYSQL_ROOT_PASSWORD }}';
               GRANT ALL PRIVILEGES ON wordpress_db.* TO 'wordpress_user'@'localhost';
               FLUSH PRIVILEGES;
-            EOSQL
+            "
           EOF
      
 
