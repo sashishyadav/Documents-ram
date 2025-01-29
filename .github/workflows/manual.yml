@@ -1,4 +1,4 @@
-name: Deploy WordPress with LEMP and SSL
+      name: Deploy WordPress with LEMP and SSL
 
 on:
   push:
