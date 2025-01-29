@@ -113,12 +113,12 @@ jobs:
             server {
                 listen 80;
                 server_name _;
-                root /var/www/html/wordpress;
+                root /var/www/html;
             
-                index index.php index.html index.htm;
+                index index.php index.html index.htm index.nginx-debian.html;
             
                 location / {
-                    try_files \$uri \$uri/ /index.php?q=\$uri&\$args;
+                    try_files \$uri \$uri/ /index.php?$args;
                 }
             
                 location ~ \.php\$ {
@@ -138,7 +138,8 @@ jobs:
                     access_log off;
                 }
             }
-            " | sudo tee /etc/nginx/sites-enabled/wordpress > /dev/null
+            " | sudo tee /etc/nginx/sites-enabled/wordpress
+                sudo systemctl restart nginx
    
      
 
