@@ -112,7 +112,7 @@ jobs:
             sudo echo "
             server {
                 listen 80;
-                server_name _;
+                server_name brainstormforce.servequake.com;
                 root /var/www/html;
             
                 index index.php index.html index.htm index.nginx-debian.html;
@@ -138,8 +138,10 @@ jobs:
                     access_log off;
                 }
             }
-            " | sudo tee /etc/nginx/sites-enabled/wordpress
+            " | sudo ln -s /etc/nginx/sites-enabled/brainstormforce.servequake.com /etc/nginx/sites-enabled/
+                sudo tee /etc/nginx/sites-enabled/wordpress
                 sudo systemctl restart nginx
+                sudo systemctl reload nginx
    
      
 
