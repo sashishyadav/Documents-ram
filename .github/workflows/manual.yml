@@ -111,7 +111,7 @@ jobs:
             sudo mv /etc/nginx/sites-enables/default /etc/nginx/sites-enabled/wordpress
             sudo tee /etc/nginx/sites-available/brainstormforce.servequake.com <<EOF
             server {
-                listen 80;
+                listen 443;
                 server_name brainstormforce.servequake.com;
                 root /var/www/html;
             
