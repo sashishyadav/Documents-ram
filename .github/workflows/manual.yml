@@ -170,7 +170,7 @@ jobs:
             sudo sed -i "s/database_name_here/wordpress_db/" /var/www/html/wordpress/wp-config.php
             sudo sed -i "s/username_here/wordpress_user/" /var/www/html/wordpress/wp-config.php
             sudo sed -i "s/password_here/${{ secrets.MYSQL_ROOT_PASSWORD }}/" /var/www/html/wordpress/wp-config.php
-            sudo mv /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/wordpress
+            #sudo mv /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/wordpress
             sudo cat < EOF > /etc/nginx/sites-enabled/wordpress
             server {
                 listen 80;
