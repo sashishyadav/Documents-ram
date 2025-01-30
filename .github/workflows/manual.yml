@@ -144,8 +144,8 @@ jobs:
                 sudo tee /etc/nginx/sites-enabled/wordpress
                 sudo systemctl restart nginx
                 sudo systemctl reload nginx
-                sudo apt install certbot python3-certbot-nginx
-                sudo certbot --nginx -d brainstormforce.servequake.com
+                sudo apt install certbot python3-certbot-nginx -y
+                sudo certbot --nginx -n --agree-tos --email sashish0377@gmail.com --redirect -d brainstormforce.servequake.com
 
       #       # Install Certbot for SSL
       #       sudo apt install certbot python3-certbot-nginx -y
