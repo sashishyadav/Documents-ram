@@ -171,13 +171,12 @@ jobs:
             sudo sed -i "s/username_here/wordpress_user/" /var/www/html/wordpress/wp-config.php
             sudo sed -i "s/password_here/${{ secrets.MYSQL_ROOT_PASSWORD }}/" /var/www/html/wordpress/wp-config.php
             sudo mv /etc/nginx/sites-enables/default /etc/nginx/sites-enabled/wordpress
-            sudo tee /etc/nginx/sites-available/brainstormforce.servequake.com <<EOF
+            sudo cat < EOF > /etc/nginx/sites-enabled/wordpress
             server {
                 listen 80;
                 server_name brainstormforce.servequake.com;
-                root /var/www/html;
-            
-                index index.php index.html index.htm index.nginx-debian.html;
+                root /var/www/html/wordpress;
+                index index.php;
             
                 location / {
                     try_files \$uri \$uri/ /index.php?$args;
@@ -196,18 +195,20 @@ jobs:
             
                 # Enable caching for static files
                 location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
-                    expires 6M;
-                    access_log off;
+                       expires 6M;      
                 }
+
+                access_log /var/log/nginx/nginx.vhost.access.log;
+                error_log /var/log/nginx/nginx.vhost.error.log;
             }
             EOF
                 
-                sudo ln -s /etc/nginx/sites-enabled/brainstormforce.servequake.com /etc/nginx/sites-enabled/
-                sudo tee /etc/nginx/sites-enabled/wordpress
-                sudo systemctl restart nginx
-                sudo systemctl reload nginx
-                sudo apt install certbot python3-certbot-nginx -y
-                sudo certbot --nginx -n --agree-tos --email sashish0377@gmail.com --redirect -d brainstormforce.servequake.com
+            sudo ln -s /etc/nginx/sites-enabled/brainstormforce.servequake.com /etc/nginx/sites-enabled/
+            sudo tee /etc/nginx/sites-enabled/wordpress
+            sudo systemctl restart nginx
+            sudo systemctl reload nginx
+            sudo apt install certbot python3-certbot-nginx -y
+            sudo certbot --nginx -n --agree-tos --email sashish0377@gmail.com --redirect -d brainstormforce.servequake.com
 
       #       # Install Certbot for SSL
       #       sudo apt install certbot python3-certbot-nginx -y
