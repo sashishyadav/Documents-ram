@@ -114,7 +114,7 @@ jobs:
             sudo mv /etc/nginx/sites-enabled/default /etc/nginx/sites-available/default.bak
             sudo tee /etc/nginx/sites-available/brainstormforce.servequake.com <<EOL
             server {
-                listen 443 ssl;
+                listen 80;
                 server_name brainstormforce.servequake.com;
                 root /var/www/html;
       
