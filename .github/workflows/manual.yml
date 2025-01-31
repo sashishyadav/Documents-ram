@@ -178,8 +178,6 @@ jobs:
           SSH_HOST: ${{ env.EC2_PUBLIC_IP }}
         run: |
           ssh -o StrictHostKeyChecking=no -i $PEM_FILE_PATH $SSH_USER@$SSH_HOST << 'EOF'      
-              sudo ln -s /etc/nginx/sites-enabled/brainstormforce.servequake.com /etc/nginx/sites-enabled/
-              sudo tee /etc/nginx/sites-enabled/wordpress
               sudo systemctl restart nginx
               sudo systemctl reload nginx
               sudo apt install certbot python3-certbot-nginx -y
