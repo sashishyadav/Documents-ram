@@ -111,7 +111,7 @@ jobs:
             sudo cp /var/www/html/wordpress/wp-config-sample.php /var/www/html/wordpress/wp-config.php
             sudo sed -i "s/database_name_here/wordpress_db/" /var/www/html/wordpress/wp-config.php
             sudo sed -i "s/username_here/wordpress_user/" /var/www/html/wordpress/wp-config.php
-            sudo sed -i "s/password_here/$MYSQL_PASSWORD/" /var/www/html/wordpress/wp-config.php
+            sudo sed -i "s/password_here/${{ secrets.MYSQL_ROOT_PASSWORD }}/" /var/www/html/wordpress/wp-config.php
       
             # Configure Nginx
             sudo tee /etc/nginx/sites-enabled/wordpress > /dev/null <<EOL
