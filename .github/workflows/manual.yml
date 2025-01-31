@@ -114,8 +114,9 @@ jobs:
             sudo sed -i "s/password_here/${{ secrets.MYSQL_ROOT_PASSWORD }}/" /var/www/html/wordpress/wp-config.php
       
             # Configure Nginx
+
             sudo tee /etc/nginx/sites-enabled/wordpress > /dev/null <<EOL
-           server {
+            server {
                 listen 80;
                 server_name brainstormforce.servequake.com;
                 root /var/www/html/wordpress;
@@ -123,7 +124,7 @@ jobs:
                 index index.php index.html index.htm index.nginx-debian.html;
             
                 location / {
-                    try_files \$uri \$uri/ /index.php?$args;
+                    try_files \$uri \$uri/ /index.php?\$args;
                 }
             
                 location ~ \.php\$ {
@@ -138,14 +139,16 @@ jobs:
                 gzip_types text/plain text/css application/json application/javascript text/xml application/xml+rss text/javascript;
             
                 # Enable caching for static files
-                location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
+                location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)\$ {
                     expires 6M;
                     access_log off;
                 }
+            
                 access_log /var/log/nginx/nginx.vhost.access.log;
                 error_log /var/log/nginx/nginx.vhost.error.log;
             }
             EOL
+
       
             # # Restart Nginx
             # sudo systemctl restart nginx
