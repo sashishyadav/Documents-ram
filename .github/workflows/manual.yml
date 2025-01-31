@@ -113,41 +113,42 @@ jobs:
             sudo sed -i "s/username_here/wordpress_user/" /var/www/html/wordpress/wp-config.php
             sudo sed -i "s/password_here/${{ secrets.MYSQL_ROOT_PASSWORD }}/" /var/www/html/wordpress/wp-config.php
       
-            # Configure Nginx
+           
+          # Configure Nginx
+          sudo tee /etc/nginx/sites-enabled/wordpress > /dev/null <<EOL
+          server {
+              listen 80;
+              server_name brainstormforce.servequake.com;
+              root /var/www/html/wordpress;
+          
+              index index.php index.html index.htm index.nginx-debian.html;
+          
+              location / {
+                  try_files \$uri \$uri/ /index.php?\$args;
+              }
+          
+              location ~ \.php\$ {
+                  include snippets/fastcgi-php.conf;
+                  fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
+                  fastcgi_param SCRIPT_FILENAME \$document_root/\$fastcgi_script_name;
+                  include fastcgi_params;
+              }
+          
+              # Enable gzip compression
+              gzip on;
+              gzip_types text/plain text/css application/json application/javascript text/xml application/xml+rss text/javascript;
+          
+              # Enable caching for static files
+              location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)\$ {
+                  expires 6M;
+                  access_log off;
+              }
+          
+              access_log /var/log/nginx/nginx.vhost.access.log;
+              error_log /var/log/nginx/nginx.vhost.error.log;
+          }
+          EOL
 
-            sudo tee /etc/nginx/sites-enabled/wordpress > /dev/null <<EOL
-            server {
-                listen 80;
-                server_name brainstormforce.servequake.com;
-                root /var/www/html/wordpress;
-            
-                index index.php index.html index.htm index.nginx-debian.html;
-            
-                location / {
-                    try_files \$uri \$uri/ /index.php?\$args;
-                }
-            
-                location ~ \.php\$ {
-                    include snippets/fastcgi-php.conf;
-                    fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
-                    fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-                    include fastcgi_params;
-                }
-            
-                # Enable gzip compression
-                gzip on;
-                gzip_types text/plain text/css application/json application/javascript text/xml application/xml+rss text/javascript;
-            
-                # Enable caching for static files
-                location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)\$ {
-                    expires 6M;
-                    access_log off;
-                }
-            
-                access_log /var/log/nginx/nginx.vhost.access.log;
-                error_log /var/log/nginx/nginx.vhost.error.log;
-            }
-            EOL
 
       
             # # Restart Nginx
