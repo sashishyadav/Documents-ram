@@ -115,47 +115,33 @@ jobs:
       
             # Configure Nginx
             sudo tee /etc/nginx/sites-enabled/wordpress > /dev/null <<EOL
-            server {
+           server {
                 listen 80;
                 server_name brainstormforce.servequake.com;
-      
-                # HTTP to HTTPS redirection
-                return 301 https://brainstormforce.servequake.com\$request_uri;
-            }
-      
-            server {
-                listen 443 ssl;
-                listen [::]:443 ssl;
-                server_name brainstormforce.servequake.com;
                 root /var/www/html/wordpress;
-                index index.php;
-      
-                # SSL Configuration
-                ssl_certificate /etc/letsencrypt/live/brainstormforce.servequake.com/fullchain.pem;
-                ssl_certificate_key /etc/letsencrypt/live/brainstormforce.servequake.com/privkey.pem;
-                include /etc/letsencrypt/options-ssl-nginx.conf;
-                ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
-      
+            
+                index index.php index.html index.htm index.nginx-debian.html;
+            
                 location / {
-                    try_files \$uri \$uri/ /index.php?\$args;
+                    try_files \$uri \$uri/ /index.php?$args;
                 }
-      
+            
                 location ~ \.php\$ {
                     include snippets/fastcgi-php.conf;
                     fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
                     fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
                     include fastcgi_params;
                 }
-      
+            
                 # Enable gzip compression
                 gzip on;
                 gzip_types text/plain text/css application/json application/javascript text/xml application/xml+rss text/javascript;
-      
+            
                 # Enable caching for static files
-                location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)\$ {
+                location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
                     expires 6M;
+                    access_log off;
                 }
-      
                 access_log /var/log/nginx/nginx.vhost.access.log;
                 error_log /var/log/nginx/nginx.vhost.error.log;
             }
