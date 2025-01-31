@@ -96,108 +96,95 @@ jobs:
           PEM_FILE_PATH: ${{ env.PEM_FILE_PATH }}
           SSH_USER: ubuntu
           SSH_HOST: ${{ env.EC2_PUBLIC_IP }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
         run: |
-          ssh -o StrictHostKeyChecking=no -i $PEM_FILE_PATH $SSH_USER@$SSH_HOST << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i $PEM_FILE_PATH $SSH_USER@$SSH_HOST << EOF
+            # Install WordPress
             cd /var/www/html
             sudo wget https://wordpress.org/latest.tar.gz
             sudo tar -xvzf latest.tar.gz
             sudo mv wordpress /var/www/html/
             sudo chown -R www-data:www-data /var/www/html/wordpress
             sudo chmod -R 755 /var/www/html/wordpress
+      
             # Configure WordPress
             sudo cp /var/www/html/wordpress/wp-config-sample.php /var/www/html/wordpress/wp-config.php
             sudo sed -i "s/database_name_here/wordpress_db/" /var/www/html/wordpress/wp-config.php
             sudo sed -i "s/username_here/wordpress_user/" /var/www/html/wordpress/wp-config.php
-            sudo sed -i "s/password_here/${{ secrets.MYSQL_ROOT_PASSWORD }}/" /var/www/html/wordpress/wp-config.php
-            #sudo mv /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/wordpress
-            # sudo cat < EOF > /etc/nginx/sites-enabled/wordpress
-            # server {
-            #     listen 80;
-            #     server_name brainstormforce.servequake.com;
-            #     root /var/www/html/wordpress;
-            #     index index.php;
-            
-            #     location / {
-            #         try_files \$uri \$uri/ /index.php?$args;
-            #     }
-            
-            #     location ~ \.php\$ {
-            #         include snippets/fastcgi-php.conf;
-            #         fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
-            #         fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-            #         include fastcgi_params;
-            #     }
-            
-            #     # Enable gzip compression
-            #     gzip on;
-            #     gzip_types text/plain text/css application/json application/javascript text/xml application/xml+rss text/javascript;
-            
-            #     # Enable caching for static files
-            #     location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
-            #            expires 6M;      
-            #     }
-
-            #     access_log /var/log/nginx/nginx.vhost.access.log;
-            #     error_log /var/log/nginx/nginx.vhost.error.log;
-            # }
-            # EOF
-        with:
-          path: '/etc/nginx/sites-available/wordpress'
-          isAbsolutePath: true
-          file: 'wordpress'
-          content: |
+            sudo sed -i "s/password_here/$MYSQL_PASSWORD/" /var/www/html/wordpress/wp-config.php
+      
+            # Configure Nginx
+            sudo tee /etc/nginx/sites-enabled/wordpress > /dev/null <<EOL
             server {
                 listen 80;
                 server_name brainstormforce.servequake.com;
-                
+      
                 # HTTP to HTTPS redirection
-                return 301 https://brainstormforce.servequake.com$request_uri;
+                return 301 https://brainstormforce.servequake.com\$request_uri;
             }
-
+      
             server {
-                   listen 443 ssl;
-                   listen [::]:443 ssl;
-                   server_name brainstormforce.servequake.com;
-                   root /var/www/html/wordpress;
-                   index index.php;
-
-                   # SSL Configuration
-                   ssl_certificate /etc/letsencrypt/live/brainstormforce.servequake.com/fullchain.pem; # managed by Certbot
-                   ssl_certificate_key /etc/letsencrypt/live/brainstormforce.servequake.com/privkey.pem; # managed by Certbot
-                   include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-                   ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
-
-                   location / {
-                           try_files $uri $uri/ /index.php?$args;
-                   }
-
-                   location ~ \.php$ {
-                           include snippets/fastcgi-php.conf;
-                           fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
-                           fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-                           include fastcgi_params;
-                   }
-
-                   # Enable gzip compression
-                   gzip on;
-                   gzip_types text/plain text/css application/json application/javascript text/xml application/xml+rss text/javascript;
-
-                   # Enable caching for static files
-                   location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
-                           expires 6M;
-                   }
-
-                   access_log /var/log/nginx/nginx.vhost.access.log;
-                   error_log /var/log/nginx/nginx.vhost.error.log;
-
-            }   
-      run: |
-            sudo ln -s /etc/nginx/sites-enabled/brainstormforce.servequake.com /etc/nginx/sites-enabled/
-            sudo tee /etc/nginx/sites-enabled/wordpress
+                listen 443 ssl;
+                listen [::]:443 ssl;
+                server_name brainstormforce.servequake.com;
+                root /var/www/html/wordpress;
+                index index.php;
+      
+                # SSL Configuration
+                ssl_certificate /etc/letsencrypt/live/brainstormforce.servequake.com/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/brainstormforce.servequake.com/privkey.pem;
+                include /etc/letsencrypt/options-ssl-nginx.conf;
+                ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+      
+                location / {
+                    try_files \$uri \$uri/ /index.php?\$args;
+                }
+      
+                location ~ \.php\$ {
+                    include snippets/fastcgi-php.conf;
+                    fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
+                    fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+                    include fastcgi_params;
+                }
+      
+                # Enable gzip compression
+                gzip on;
+                gzip_types text/plain text/css application/json application/javascript text/xml application/xml+rss text/javascript;
+      
+                # Enable caching for static files
+                location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)\$ {
+                    expires 6M;
+                }
+      
+                access_log /var/log/nginx/nginx.vhost.access.log;
+                error_log /var/log/nginx/nginx.vhost.error.log;
+            }
+            EOL
+      
+            # Restart Nginx
             sudo systemctl restart nginx
             sudo systemctl reload nginx
+      
+            # Install Certbot and Configure SSL
+            sudo apt update
             sudo apt install certbot python3-certbot-nginx -y
             sudo certbot --nginx -n --agree-tos --email sashish0377@gmail.com --redirect -d brainstormforce.servequake.com
+          EOF
+       
+      # - name: SSH and SSL
+      #   env:
+      #     PEM_FILE_PATH: ${{ env.PEM_FILE_PATH }}
+      #     SSH_USER: ubuntu
+      #     SSH_HOST: ${{ env.EC2_PUBLIC_IP }}
+      #   run: |
+      #     ssh -o StrictHostKeyChecking=no -i $PEM_FILE_PATH $SSH_USER@$SSH_HOST << 'EOF'      
+      #         sudo ln -s /etc/nginx/sites-enabled/brainstormforce.servequake.com /etc/nginx/sites-enabled/
+      #         sudo tee /etc/nginx/sites-enabled/wordpress
+      #         sudo systemctl restart nginx
+      #         sudo systemctl reload nginx
+      #         sudo apt install certbot python3-certbot-nginx -y
+      #         sudo certbot --nginx -n --agree-tos --email sashish0377@gmail.com --redirect -d brainstormforce.servequake.com
+      #     EOF    
 
       #       # Install Certbot for SSL
       #       sudo apt install certbot python3-certbot-nginx -y
