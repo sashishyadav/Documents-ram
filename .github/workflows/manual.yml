@@ -7,7 +7,7 @@ on:
       
 env:
   PARAMETER_NAME: "test-key"
-  INSTANCE_ID: "i-07aef1121d6082521" 
+  INSTANCE_ID: "i-0716fab40cbd90904" 
   AWS_REGION: "eu-north-1"
   
 jobs:
