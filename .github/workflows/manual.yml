@@ -160,7 +160,7 @@ jobs:
               sudo systemctl restart nginx
               sudo systemctl reload nginx
               sudo apt install certbot python3-certbot-nginx -y
-              sudo certbot --nginx -n --agree-tos --email sashish0377@gmail.com --redirect -d brainstormforce.servequake.com
+              sudo certbot --nginx -n --agree-tos --email sashish0377@gmail.com --redirect -d brainstormforce.servequake.com --key-type rsa
           EOF    
 
       #       # Install Certbot for SSL
