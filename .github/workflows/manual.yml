@@ -7,7 +7,7 @@ on:
       
 env:
   PARAMETER_NAME: "test-key"
-  INSTANCE_ID: "i-0716fab40cbd90904" 
+  INSTANCE_ID: "i-0aae7cdb16572a982" 
   AWS_REGION: "eu-north-1"
   
 jobs:
@@ -162,14 +162,3 @@ jobs:
               sudo apt install certbot python3-certbot-nginx -y
               sudo certbot --nginx -n --agree-tos --email sashish0377@gmail.com --redirect -d brainstormforce.servequake.com --key-type ecdsa
           EOF    
-
-      #       # Install Certbot for SSL
-      #       sudo apt install certbot python3-certbot-nginx -y
-      #       sudo certbot --nginx -n --agree-tos --email admin@example.com --redirect -d yourdomain.com
-      #     EOF env:
-      
-
-      #     # Step 3: Verify the deployment 
-      #     - name: Verify Deployment
-      #       run: curl -I http://${{ secrets.SERVER_IP }} 
-
