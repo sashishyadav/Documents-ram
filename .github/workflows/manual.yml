@@ -88,7 +88,7 @@ jobs:
               GRANT ALL PRIVILEGES ON wordpress_db.* TO 'wordpress_user'@'localhost';
               FLUSH PRIVILEGES;
             "
-            EOF
+          EOF
     
 
       - name: SSH and install WordPress
