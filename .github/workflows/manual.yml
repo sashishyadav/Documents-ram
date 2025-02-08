@@ -71,7 +71,7 @@ jobs:
            # sudo add-apt-repository -y ppa:ondrej/php
             sudo apt-get install -y php8.1 php8.1-gd php8.1-mysql php8.1-zip
             sudo apt-get install -y php8.1-fpm
-            EOF
+          EOF
         
       - name: SSH and mysql
         env:
